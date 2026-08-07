@@ -18,12 +18,46 @@ limitations under the License.
 
 package io.github.jjweston.robogit;
 
+import java.io.File;
+import java.util.List;
+
 class Main
 {
     private Main() {}
 
-    static void main()
+    static void main( String[] args )
     {
-        System.out.println( "Hello, world!" );
+        if ( args.length < 1 )
+        {
+            System.err.println( "Error: Git repository not specified." );
+            System.err.println();
+            System.err.println( "Usage: `mvn exec:java -Dexec.args=\"<Git repository>\"`" );
+            System.err.println();
+            System.err.println( "Replace `<Git repository>` with the location of your Git repository." );
+            System.exit( 1 );
+        }
+
+        File repository = new File( args[ 0 ] );
+
+        System.out.println( "Running `git status` in: " + repository );
+        ProcessRunner processRunner = new ProcessRunner( repository, "git", "status" );
+        processRunner.run();
+
+        List< String > stdOut = processRunner.getStdOut();
+        List< String > stdErr = processRunner.getStdErr();
+
+        System.out.println();
+        System.out.println( "Exit Value: " + processRunner.getExitValue() );
+        Main.logLines( "Output", stdOut );
+        Main.logLines( "Error", stdErr );
+    }
+
+    private static void logLines( String title, List< String > lines )
+    {
+        if ( lines.isEmpty() ) return;
+
+        System.out.println();
+        System.out.println( title + ":" );
+        for ( String line : lines ) System.out.println( "> " + line );
     }
 }

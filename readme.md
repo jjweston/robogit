@@ -10,6 +10,8 @@ RoboGit periodically checks for changes in the working tree of a Git repository 
 
 ## Prerequisites
 
+### Java
+
 You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build and run RoboGit.
 We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
 
@@ -20,11 +22,19 @@ RoboGit works with following versions, but other versions may also work:
 - Apache Maven:
   - `3.9.12`
 
+### Git
+
+You need the [Git](https://git-scm.com/) command-line tools to run RoboGit.
+
+RoboGit works with version `2.52.0`, but other versions may also work.
+
 ## Building and Running
 
 To build RoboGit: `mvn package`
 
-To run RoboGit: `mvn exec:java`
+To run RoboGit: `mvn exec:java -Dexec.args="<Git repository>"`
+
+Replace `<Git repository>` with the location of your Git repository.
 
 ## License
 
