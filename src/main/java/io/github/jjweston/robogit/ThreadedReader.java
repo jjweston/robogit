@@ -24,25 +24,29 @@ import java.util.List;
 
 class ThreadedReader implements AutoCloseable
 {
-    private final ThreadFactory threadFactory;
+    private final ThreadUtil     threadUtil;
+    private final ThreadFactory  threadFactory;
     private final BufferedReader reader;
-    private final List< String > lines = new LinkedList<>();
+    private final List< String > lines;
 
     boolean started = false;
-    private Thread thread;
+
+    private Thread    thread;
     private Exception exception;
 
     ThreadedReader( BufferedReader reader )
     {
-        this( new ThreadFactory(), reader );
+        this( new ThreadUtil(), new ThreadFactory(), reader );
     }
 
-    ThreadedReader( ThreadFactory threadFactory, BufferedReader reader )
+    ThreadedReader( ThreadUtil threadUtil, ThreadFactory threadFactory, BufferedReader reader )
     {
         if ( reader == null ) throw new IllegalArgumentException( "Reader must not be null." );
 
+        this.threadUtil    = threadUtil;
         this.threadFactory = threadFactory;
-        this.reader = reader;
+        this.reader        = reader;
+        this.lines         = new LinkedList<>();
     }
 
     public void close()
@@ -82,8 +86,8 @@ class ThreadedReader implements AutoCloseable
         }
         catch ( InterruptedException e )
         {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException( e );
+            this.threadUtil.interruptCurrentThread();
+            throw new RuntimeException( "InterruptedException occurred while joining thread.", e );
         }
     }
 

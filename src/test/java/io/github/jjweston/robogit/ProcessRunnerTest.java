@@ -39,6 +39,7 @@ class ProcessRunnerTest
     private final File     testDirectory = new File( "directory" );
     private final String[] testCommand   = { "command" };
 
+    @Mock private ThreadUtil            mockThreadUtil;
     @Mock private ProcessBuilderFactory mockProcessBuilderFactory;
     @Mock private ThreadedReaderFactory mockThreadedReaderFactory;
     @Mock private ProcessBuilder        mockProcessBuilder;
@@ -54,7 +55,8 @@ class ProcessRunnerTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> new ProcessRunner(
-                        this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, null, this.testCommand ));
+                        this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                        null, this.testCommand ));
 
         assertEquals( "Directory must not be null.", exception.getMessage() );
     }
@@ -65,7 +67,7 @@ class ProcessRunnerTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> new ProcessRunner(
-                        this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                        this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
                         this.testDirectory, (String[]) null ));
 
         assertEquals( "Command must not be null.", exception.getMessage() );
@@ -76,7 +78,7 @@ class ProcessRunnerTest
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> new ProcessRunner(
-                        this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                        this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
                         this.testDirectory, "foo", null, "bar" ));
 
         assertEquals( "Command argument must not be null.", exception.getMessage() );
@@ -88,7 +90,8 @@ class ProcessRunnerTest
         this.mockProcessCreation();
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         processRunner.run();
         IllegalStateException exception = assertThrowsExactly( IllegalStateException.class, processRunner::run );
         assertEquals( "Process has already run.", exception.getMessage() );
@@ -97,16 +100,34 @@ class ProcessRunnerTest
     @Test
     void testRun_startException() throws Exception
     {
-        IOException innerException = new IOException( "test" );
+        IOException ioException = new IOException( "test" );
 
         when( this.mockProcessBuilderFactory.create( this.testCommand )).thenReturn( this.mockProcessBuilder );
-        when( this.mockProcessBuilder.start() ).thenThrow( innerException );
+        when( this.mockProcessBuilder.start() ).thenThrow( ioException );
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
-        assertEquals( "IOException starting process.", exception.getMessage() );
-        assertEquals( innerException, exception.getCause() );
+        assertEquals( "IOException occurred while starting process.", exception.getMessage() );
+        assertEquals( ioException, exception.getCause() );
+    }
+
+    @Test
+    void testRun_interruptedException() throws Exception
+    {
+        InterruptedException interruptedException = new InterruptedException( "test" );
+
+        this.mockProcessCreation();
+        when( this.mockProcess.waitFor() ).thenThrow( interruptedException );
+
+        ProcessRunner processRunner = new ProcessRunner(
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
+        assertEquals( "InterruptedException occurred while waiting for process.", exception.getMessage() );
+        assertEquals( interruptedException, exception.getCause() );
+        verify( this.mockThreadUtil ).interruptCurrentThread();
     }
 
     @Test
@@ -118,7 +139,8 @@ class ProcessRunnerTest
         when( this.mockStdOutThreadedReader.getException() ).thenReturn( stdOutException );
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
         assertEquals( "Exception occurred while reading standard output.", exception.getMessage() );
         assertEquals( stdOutException, exception.getCause() );
@@ -133,7 +155,8 @@ class ProcessRunnerTest
         when( this.mockStdErrThreadedReader.getException() ).thenReturn( stdErrException );
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
         assertEquals( "Exception occurred while reading standard error.", exception.getMessage() );
         assertEquals( stdErrException, exception.getCause() );
@@ -150,7 +173,8 @@ class ProcessRunnerTest
         when( this.mockStdErrThreadedReader.getException() ).thenReturn( stdErrException );
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
 
         assertEquals( "Exceptions occurred while reading standard input and standard error.", exception.getMessage() );
@@ -171,7 +195,8 @@ class ProcessRunnerTest
     void testGetExitValue_notStarted()
     {
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         IllegalStateException exception =
                 assertThrowsExactly( IllegalStateException.class, processRunner::getExitValue );
         assertEquals( "Process has not run.", exception.getMessage() );
@@ -181,7 +206,8 @@ class ProcessRunnerTest
     void testGetStdOut_notStarted()
     {
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         IllegalStateException exception = assertThrowsExactly( IllegalStateException.class, processRunner::getStdOut );
         assertEquals( "Process has not run.", exception.getMessage() );
     }
@@ -190,7 +216,8 @@ class ProcessRunnerTest
     void testGetStdErr_notStarted()
     {
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         IllegalStateException exception = assertThrowsExactly( IllegalStateException.class, processRunner::getStdErr );
         assertEquals( "Process has not run.", exception.getMessage() );
     }
@@ -208,7 +235,8 @@ class ProcessRunnerTest
         when( this.mockStdErrThreadedReader.getLines() ).thenReturn( testStdErr );
 
         ProcessRunner processRunner = new ProcessRunner(
-                this.mockProcessBuilderFactory, this.mockThreadedReaderFactory, this.testDirectory, this.testCommand );
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
         processRunner.run();
 
         assertEquals( testExitValue, processRunner.getExitValue() );
