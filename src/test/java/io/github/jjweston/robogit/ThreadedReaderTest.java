@@ -33,13 +33,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
 class ThreadedReaderTest
 {
+    @Mock private ThreadUtil     mockThreadUtil;
     @Mock private ThreadFactory  mockThreadFactory;
     @Mock private Thread         mockThread;
     @Mock private BufferedReader mockBufferedReader;
@@ -48,8 +51,8 @@ class ThreadedReaderTest
     void testConstructor_nullEmbeddingCacheService()
     {
         @SuppressWarnings( { "DataFlowIssue", "resource" } )
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> new ThreadedReader( this.mockThreadFactory, null ));
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, null ));
 
         assertEquals( "Reader must not be null.", exception.getMessage() );
     }
@@ -57,9 +60,10 @@ class ThreadedReaderTest
     @Test
     void testStart_previouslyStarted()
     {
-        when( this.mockThreadFactory.create( any())).thenReturn( this.mockThread );
+        when( this.mockThreadFactory.create( any() )).thenReturn( this.mockThread );
 
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             threadedReader.start();
             IllegalStateException exception = assertThrowsExactly( IllegalStateException.class, threadedReader::start );
@@ -68,9 +72,29 @@ class ThreadedReaderTest
     }
 
     @Test
+    void testJoin_interrupted() throws Exception
+    {
+        InterruptedException interruptedException = new InterruptedException( "test" );
+
+        when( this.mockThreadFactory.create( any() )).thenReturn( this.mockThread );
+        doThrow( interruptedException ).doNothing().when( this.mockThread ).join();
+
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
+        {
+            threadedReader.start();
+            RuntimeException exception = assertThrowsExactly( RuntimeException.class, threadedReader::join );
+            assertEquals( "InterruptedException occurred while joining thread.", exception.getMessage() );
+            assertEquals( interruptedException, exception.getCause() );
+            verify( this.mockThreadUtil ).interruptCurrentThread();
+        }
+    }
+
+    @Test
     void testGetLines_notStarted()
     {
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             IllegalStateException exception =
                     assertThrowsExactly( IllegalStateException.class, threadedReader::getLines );
@@ -81,9 +105,10 @@ class ThreadedReaderTest
     @Test
     void testGetLines_running()
     {
-        when( this.mockThreadFactory.create( any())).thenReturn( this.mockThread );
+        when( this.mockThreadFactory.create( any() )).thenReturn( this.mockThread );
 
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             threadedReader.start();
             IllegalStateException exception =
@@ -95,7 +120,8 @@ class ThreadedReaderTest
     @Test
     void testGetException_notStarted()
     {
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             IllegalStateException exception =
                     assertThrowsExactly( IllegalStateException.class, threadedReader::getException );
@@ -106,9 +132,10 @@ class ThreadedReaderTest
     @Test
     void testGetException_running()
     {
-        when( this.mockThreadFactory.create( any())).thenReturn( this.mockThread );
+        when( this.mockThreadFactory.create( any() )).thenReturn( this.mockThread );
 
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             threadedReader.start();
             IllegalStateException exception =
@@ -123,7 +150,8 @@ class ThreadedReaderTest
         when( this.mockBufferedReader.readLine() ).thenReturn( "Line 1", "Line 2", "Line 3", null );
         this.mockThreadCreation();
 
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             threadedReader.start();
             threadedReader.join();
@@ -147,7 +175,8 @@ class ThreadedReaderTest
         when( this.mockBufferedReader.readLine() ).thenThrow( testException );
         this.mockThreadCreation();
 
-        try ( ThreadedReader threadedReader = new ThreadedReader( this.mockThreadFactory, this.mockBufferedReader ))
+        try ( ThreadedReader threadedReader =
+                      new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             threadedReader.start();
             threadedReader.join();

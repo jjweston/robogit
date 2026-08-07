@@ -25,6 +25,7 @@ import java.util.List;
 
 class ProcessRunner
 {
+    private final ThreadUtil            threadUtil;
     private final ProcessBuilderFactory processBuilderFactory;
     private final ThreadedReaderFactory threadedReaderFactory;
     private final File                  directory;
@@ -38,11 +39,11 @@ class ProcessRunner
 
     ProcessRunner( File directory, String... command )
     {
-        this( new ProcessBuilderFactory(), new ThreadedReaderFactory(), directory, command );
+        this( new ThreadUtil(), new ProcessBuilderFactory(), new ThreadedReaderFactory(), directory, command );
     }
 
-    ProcessRunner( ProcessBuilderFactory processBuilderFactory, ThreadedReaderFactory threadedReaderFactory,
-                   File directory, String... command )
+    ProcessRunner( ThreadUtil threadUtil, ProcessBuilderFactory processBuilderFactory,
+                   ThreadedReaderFactory threadedReaderFactory, File directory, String... command )
     {
         if ( directory == null ) throw new IllegalArgumentException( "Directory must not be null." );
         if ( command == null ) throw new IllegalArgumentException( "Command must not be null." );
@@ -52,10 +53,11 @@ class ProcessRunner
             if ( argument == null ) throw new IllegalArgumentException( "Command argument must not be null." );
         }
 
+        this.threadUtil            = threadUtil;
         this.processBuilderFactory = processBuilderFactory;
         this.threadedReaderFactory = threadedReaderFactory;
-        this.directory = directory;
-        this.command = command;
+        this.directory             = directory;
+        this.command               = command;
     }
 
     void run()
@@ -68,7 +70,7 @@ class ProcessRunner
 
         Process process;
         try { process = processBuilder.start(); }
-        catch ( IOException e ) { throw new RuntimeException( "IOException starting process.", e ); }
+        catch ( IOException e ) { throw new RuntimeException( "IOException occurred while starting process.", e ); }
 
         try ( ThreadedReader stdOutReader = this.threadedReaderFactory.create( process.inputReader() );
               ThreadedReader stdErrReader = this.threadedReaderFactory.create( process.errorReader() ))
@@ -79,8 +81,8 @@ class ProcessRunner
             try { this.exitValue = process.waitFor(); }
             catch ( InterruptedException e )
             {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException( e );
+                this.threadUtil.interruptCurrentThread();
+                throw new RuntimeException( "InterruptedException occurred while waiting for process.", e );
             }
 
             stdOutReader.join();
