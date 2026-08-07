@@ -20,6 +20,7 @@ package io.github.jjweston.robogit;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -72,8 +73,10 @@ class ProcessRunner
         try { process = processBuilder.start(); }
         catch ( IOException e ) { throw new RuntimeException( "IOException occurred while starting process.", e ); }
 
-        try ( ThreadedReader stdOutReader = this.threadedReaderFactory.create( process.inputReader() );
-              ThreadedReader stdErrReader = this.threadedReaderFactory.create( process.errorReader() ))
+        try ( ThreadedReader stdOutReader =
+                      this.threadedReaderFactory.create( process.inputReader( StandardCharsets.UTF_8 ));
+              ThreadedReader stdErrReader =
+                      this.threadedReaderFactory.create( process.errorReader( StandardCharsets.UTF_8 )))
         {
             stdOutReader.start();
             stdErrReader.start();
