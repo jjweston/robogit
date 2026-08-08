@@ -19,6 +19,7 @@ limitations under the License.
 package io.github.jjweston.robogit;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 class Main
@@ -40,15 +41,23 @@ class Main
         File repository = new File( args[ 0 ] );
 
         System.out.println( "Running `git status` in: " + repository );
-        ProcessRunner processRunner = new ProcessRunner( repository, "git", "status" );
+        ProcessRunner processRunner = new ProcessRunner(
+                repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
         processRunner.run();
 
         List< String > stdOut = processRunner.getStdOut();
         List< String > stdErr = processRunner.getStdErr();
 
+        List< String > filenames = stdOut
+                .stream()
+                .flatMap( s -> Arrays.stream( s.split( "\0" )))
+                .map( s -> s.substring( 3 ))
+                .map( Util::escapeFilename )
+                .toList();
+
         System.out.println();
         System.out.println( "Exit Value: " + processRunner.getExitValue() );
-        Main.logLines( "Output", stdOut );
+        Main.logLines( "Output", filenames );
         Main.logLines( "Error", stdErr );
     }
 

@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -250,8 +251,8 @@ class ProcessRunnerTest
     {
         when( this.mockProcessBuilderFactory.create( this.testCommand )).thenReturn( this.mockProcessBuilder );
         when( this.mockProcessBuilder.start() ).thenReturn( this.mockProcess );
-        when( this.mockProcess.inputReader() ).thenReturn( this.mockStdOutBufferedReader );
-        when( this.mockProcess.errorReader() ).thenReturn( this.mockStdErrBufferedReader );
+        when( this.mockProcess.inputReader( StandardCharsets.UTF_8 )).thenReturn( this.mockStdOutBufferedReader );
+        when( this.mockProcess.errorReader( StandardCharsets.UTF_8 )).thenReturn( this.mockStdErrBufferedReader );
         when( this.mockThreadedReaderFactory.create( this.mockStdOutBufferedReader ))
                 .thenReturn( this.mockStdOutThreadedReader );
         when( this.mockThreadedReaderFactory.create( this.mockStdErrBufferedReader ))
