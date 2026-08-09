@@ -24,17 +24,30 @@ class Util
     {
         if ( filename == null ) throw new IllegalArgumentException( "Filename must not be null." );
 
-        String result = filename
-                .replace( "\\", "\\\\" )
-                .replace( "\b", "\\b" )
-                .replace( "\t", "\\t" )
-                .replace( "\n", "\\n" )
-                .replace( "\f", "\\f" )
-                .replace( "\r", "\\r" )
-                .replace( "\"", "\\\"" );
+        StringBuilder builder = new StringBuilder();
 
+        for ( char c : filename.toCharArray() )
+        {
+            switch ( c )
+            {
+                case '\b' -> builder.append( "\\b" );
+                case '\t' -> builder.append( "\\t" );
+                case '\n' -> builder.append( "\\n" );
+                case '\f' -> builder.append( "\\f" );
+                case '\r' -> builder.append( "\\r" );
+                case '"'  -> builder.append( "\\\"" );
+                case '\\' -> builder.append( "\\\\" );
+
+                default ->
+                {
+                    if ( c >= 0x20 && c <= 0x7E ) builder.append( c );
+                    else builder.append( String.format( "\\u%04X", (int) c ));
+                }
+            }
+        }
+
+        String result = builder.toString();
         if (( result.contains( " " )) || ( result.contains( "\\" ))) return "\"" + result + "\"";
-
         return result;
     }
 }
