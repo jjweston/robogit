@@ -40,7 +40,6 @@ public class UtilTest
     {
         assertEquals( "foo", Util.escapeFilename( "foo" ));
         assertEquals( "\"foo bar\"", Util.escapeFilename( "foo bar" ));
-        assertEquals( "\"\\b\\t\\n\\f\\r\\\"\\\\\\b\\t\\n\\f\\r\\\"\\\\\"",
-                Util.escapeFilename( "\b\t\n\f\r\"\\\b\t\n\f\r\"\\" ));
+        assertEquals( "\"\\b\\t\\n\\f\\r\\\"\\\\\\uD83D\\uDE0A\"", Util.escapeFilename( "\b\t\n\f\r\"\\\uD83D\uDE0A" ));
     }
 }
