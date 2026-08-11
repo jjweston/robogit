@@ -119,6 +119,16 @@ class ProcessRunner
 
             this.stdOut = stdOutReader.getLines();
             this.stdErr = stdErrReader.getLines();
+
+            if ( this.exitValue != 0 )
+            {
+                StringBuilder message = new StringBuilder();
+                message.append( "Non-zero exit value returned from process: " );
+                message.append( this.exitValue );
+                this.appendLines( message, "Output", this.stdOut );
+                this.appendLines( message, "Error", this.stdErr );
+                throw new RuntimeException( message.toString() );
+            }
         }
     }
 
@@ -138,5 +148,21 @@ class ProcessRunner
     {
         if ( !this.run ) throw new IllegalStateException( "Process has not run." );
         return this.stdErr;
+    }
+
+    private void appendLines( StringBuilder builder, String title, List< String > lines )
+    {
+        if ( lines.isEmpty() ) return;
+
+        builder.append( "\n\n" );
+        builder.append( title );
+        builder.append( ":" );
+
+        for ( String line : lines )
+        {
+            builder.append( "\n" );
+            builder.append( "> " );
+            builder.append( line );
+        }
     }
 }

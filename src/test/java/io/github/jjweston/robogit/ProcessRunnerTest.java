@@ -37,8 +37,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith( MockitoExtension.class )
 class ProcessRunnerTest
 {
-    private final File     testDirectory = new File( "directory" );
-    private final String[] testCommand   = { "command" };
+    private final File           testDirectory = new File( "directory" );
+    private final String[]       testCommand   = { "command" };
+    private final List< String > testStdOut    = List.of( "Out 1", "Out 2", "Out 3" );
+    private final List< String > testStdErr    = List.of( "Err 1", "Err 2", "Err 3" );
+
 
     @Mock private ThreadUtil            mockThreadUtil;
     @Mock private ProcessBuilderFactory mockProcessBuilderFactory;
@@ -226,25 +229,48 @@ class ProcessRunnerTest
     @Test
     void testSuccess() throws Exception
     {
-        int testExitValue = 42;
-        List< String > testStdOut = List.of( "Out 1", "Out 2", "Out 3" );
-        List< String > testStdErr = List.of( "Err 1", "Err 2", "Err 3" );
+        int testExitValue = 0;
 
-        this.mockProcessCreation();
-        when( this.mockProcess.waitFor() ).thenReturn( testExitValue );
-        when( this.mockStdOutThreadedReader.getLines() ).thenReturn( testStdOut );
-        when( this.mockStdErrThreadedReader.getLines() ).thenReturn( testStdErr );
+        this.mockProcessCreation( testExitValue );
 
         ProcessRunner processRunner = new ProcessRunner(
                 this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
                 this.testDirectory, this.testCommand );
         processRunner.run();
 
-        assertEquals( testExitValue, processRunner.getExitValue() );
-        assertEquals( testStdOut, processRunner.getStdOut() );
-        assertEquals( testStdErr, processRunner.getStdErr() );
+        this.verifyProcessRun( processRunner, testExitValue );
+    }
 
-        verify( this.mockProcessBuilder ).directory( this.testDirectory );
+    @Test
+    void testNonZeroExitValue() throws Exception
+    {
+        int testExitValue = 42;
+
+        String expectedMessage =
+                """
+                Non-zero exit value returned from process: 42
+
+                Output:
+                > Out 1
+                > Out 2
+                > Out 3
+
+                Error:
+                > Err 1
+                > Err 2
+                > Err 3\
+                """;
+
+        this.mockProcessCreation( testExitValue );
+
+        ProcessRunner processRunner = new ProcessRunner(
+                this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
+                this.testDirectory, this.testCommand );
+
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
+        assertEquals( expectedMessage, exception.getMessage() );
+
+        this.verifyProcessRun( processRunner, testExitValue );
     }
 
     private void mockProcessCreation() throws Exception
@@ -257,5 +283,22 @@ class ProcessRunnerTest
                 .thenReturn( this.mockStdOutThreadedReader );
         when( this.mockThreadedReaderFactory.create( this.mockStdErrBufferedReader ))
                 .thenReturn( this.mockStdErrThreadedReader );
+    }
+
+    private void mockProcessCreation( int exitValue ) throws Exception
+    {
+        this.mockProcessCreation();
+        when( this.mockProcess.waitFor() ).thenReturn( exitValue );
+        when( this.mockStdOutThreadedReader.getLines() ).thenReturn( this.testStdOut );
+        when( this.mockStdErrThreadedReader.getLines() ).thenReturn( this.testStdErr );
+    }
+
+    private void verifyProcessRun( ProcessRunner processRunner, int exitValue )
+    {
+        assertEquals( exitValue, processRunner.getExitValue() );
+        assertEquals( this.testStdOut, processRunner.getStdOut() );
+        assertEquals( this.testStdErr, processRunner.getStdErr() );
+
+        verify( this.mockProcessBuilder ).directory( this.testDirectory );
     }
 }
