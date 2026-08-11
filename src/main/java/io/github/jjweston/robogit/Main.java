@@ -19,7 +19,10 @@ limitations under the License.
 package io.github.jjweston.robogit;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 class Main
@@ -40,6 +43,8 @@ class Main
 
         File repository = new File( args[ 0 ] );
 
+        Instant currentTime = Instant.now();
+
         System.out.println( "Running `git status` in: " + repository );
         ProcessRunner processRunner = new ProcessRunner(
                 repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
@@ -50,14 +55,64 @@ class Main
 
         List< String > filenames = stdOut
                 .stream()
-                .flatMap( s -> Arrays.stream( s.split( "\0" )))
+                .map( s -> s.split( "\0" ))
+                .flatMap( Arrays::stream )
                 .map( s -> s.substring( 3 ))
+                .toList();
+
+        List< String > displayFilenames = filenames
+                .stream()
                 .map( Util::escapeFilename )
                 .toList();
 
+        List< Long > modificationAges = filenames
+                .stream()
+                .map( filename -> new File( repository, filename ))
+                .map( File::lastModified )
+                .map( lastModified -> lastModified == 0 ? currentTime : Instant.ofEpochMilli( lastModified ))
+                .map( modificationTime -> Duration.between( modificationTime, currentTime ))
+                .map( Duration::toSeconds )
+                .toList();
+
+        int maxFilenameLength = displayFilenames
+                .stream()
+                .mapToInt( String::length )
+                .max()
+                .orElse( 1 );
+
+        int maxModificationAgeLength = modificationAges
+                .stream()
+                .map( age -> String.format( "%,d", age ))
+                .mapToInt( String::length )
+                .max()
+                .orElse( 1 );
+
+        List< String > output = new LinkedList<>();
+
+        if ( !filenames.isEmpty() )
+        {
+            String nameHeader = "Name";
+            String ageHeader = "Age";
+
+            if ( nameHeader.length() > maxFilenameLength ) maxFilenameLength = nameHeader.length();
+            if ( ageHeader.length() > maxModificationAgeLength ) maxModificationAgeLength = ageHeader.length();
+
+            String headerFormat = String.format( "%%-%ds | %%s", maxFilenameLength );
+            output.add( String.format( headerFormat, nameHeader, ageHeader ));
+            output.add( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
+        }
+
+        String outputFormat = String.format( "%%-%ds | %%,%dd", maxFilenameLength, maxModificationAgeLength );
+        for ( int i =  0; i < displayFilenames.size(); i++ )
+        {
+            String filename = displayFilenames.get( i );
+            Long modificationAge = modificationAges.get( i );
+            output.add( String.format( outputFormat, filename, modificationAge ));
+        }
+
         System.out.println();
         System.out.println( "Exit Value: " + processRunner.getExitValue() );
-        Main.logLines( "Output", filenames );
+        Main.logLines( "Output", output );
         Main.logLines( "Error", stdErr );
     }
 
