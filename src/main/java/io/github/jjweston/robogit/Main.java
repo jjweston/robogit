@@ -50,10 +50,8 @@ class Main
                 repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
         processRunner.run();
 
-        List< String > stdOut = processRunner.getStdOut();
-        List< String > stdErr = processRunner.getStdErr();
-
-        List< String > filenames = stdOut
+        List< String > filenames = processRunner
+                .getStdOut()
                 .stream()
                 .map( s -> s.split( "\0" ))
                 .flatMap( Arrays::stream )
@@ -87,10 +85,10 @@ class Main
                 .max()
                 .orElse( 1 );
 
-        List< String > output = new LinkedList<>();
-
         if ( !filenames.isEmpty() )
         {
+            List< String > output = new LinkedList<>();
+
             String nameHeader = "Name";
             String ageHeader = "Age";
 
@@ -100,28 +98,17 @@ class Main
             String headerFormat = String.format( "%%-%ds | %%s", maxFilenameLength );
             output.add( String.format( headerFormat, nameHeader, ageHeader ));
             output.add( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
+
+            String outputFormat = String.format( "%%-%ds | %%,%dd", maxFilenameLength, maxModificationAgeLength );
+            for ( int i =  0; i < displayFilenames.size(); i++ )
+            {
+                String filename = displayFilenames.get( i );
+                Long modificationAge = modificationAges.get( i );
+                output.add( String.format( outputFormat, filename, modificationAge ));
+            }
+
+            System.out.println();
+            for ( String line : output ) System.out.println( line );
         }
-
-        String outputFormat = String.format( "%%-%ds | %%,%dd", maxFilenameLength, maxModificationAgeLength );
-        for ( int i =  0; i < displayFilenames.size(); i++ )
-        {
-            String filename = displayFilenames.get( i );
-            Long modificationAge = modificationAges.get( i );
-            output.add( String.format( outputFormat, filename, modificationAge ));
-        }
-
-        System.out.println();
-        System.out.println( "Exit Value: " + processRunner.getExitValue() );
-        Main.logLines( "Output", output );
-        Main.logLines( "Error", stdErr );
-    }
-
-    private static void logLines( String title, List< String > lines )
-    {
-        if ( lines.isEmpty() ) return;
-
-        System.out.println();
-        System.out.println( title + ":" );
-        for ( String line : lines ) System.out.println( "> " + line );
     }
 }
