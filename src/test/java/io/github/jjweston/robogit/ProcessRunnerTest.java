@@ -27,7 +27,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -39,9 +38,20 @@ class ProcessRunnerTest
 {
     private final File           testDirectory = new File( "directory" );
     private final String[]       testCommand   = { "command" };
-    private final List< String > testStdOut    = List.of( "Out 1", "Out 2", "Out 3" );
-    private final List< String > testStdErr    = List.of( "Err 1", "Err 2", "Err 3" );
 
+    private final String testStdOut =
+            """
+            Out 1
+            Out 2
+            Out 3
+            """;
+
+    private final String testStdErr =
+            """
+            Error 1
+            Error 2
+            Error 3
+            """;
 
     @Mock private ThreadUtil            mockThreadUtil;
     @Mock private ProcessBuilderFactory mockProcessBuilderFactory;
@@ -91,7 +101,7 @@ class ProcessRunnerTest
     @Test
     void testRun_previouslyStarted() throws Exception
     {
-        this.mockProcessCreation();
+        this.mockProcessCreation( 0 );
 
         ProcessRunner processRunner = new ProcessRunner(
                 this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
@@ -256,9 +266,9 @@ class ProcessRunnerTest
                 > Out 3
 
                 Error:
-                > Err 1
-                > Err 2
-                > Err 3\
+                > Error 1
+                > Error 2
+                > Error 3\
                 """;
 
         this.mockProcessCreation( testExitValue );
@@ -289,8 +299,8 @@ class ProcessRunnerTest
     {
         this.mockProcessCreation();
         when( this.mockProcess.waitFor() ).thenReturn( exitValue );
-        when( this.mockStdOutThreadedReader.getLines() ).thenReturn( this.testStdOut );
-        when( this.mockStdErrThreadedReader.getLines() ).thenReturn( this.testStdErr );
+        when( this.mockStdOutThreadedReader.getContent() ).thenReturn( this.testStdOut );
+        when( this.mockStdErrThreadedReader.getContent() ).thenReturn( this.testStdErr );
     }
 
     private void verifyProcessRun( ProcessRunner processRunner, int exitValue )

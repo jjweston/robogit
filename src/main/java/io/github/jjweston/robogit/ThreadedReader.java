@@ -19,19 +19,17 @@ limitations under the License.
 package io.github.jjweston.robogit;
 
 import java.io.BufferedReader;
-import java.util.LinkedList;
-import java.util.List;
 
 class ThreadedReader implements AutoCloseable
 {
     private final ThreadUtil     threadUtil;
     private final ThreadFactory  threadFactory;
     private final BufferedReader reader;
-    private final List< String > lines;
 
-    boolean started = false;
+    private boolean started = false;
 
     private Thread    thread;
+    private String    content;
     private Exception exception;
 
     ThreadedReader( BufferedReader reader )
@@ -46,7 +44,6 @@ class ThreadedReader implements AutoCloseable
         this.threadUtil    = threadUtil;
         this.threadFactory = threadFactory;
         this.reader        = reader;
-        this.lines         = new LinkedList<>();
     }
 
     public void close()
@@ -59,17 +56,10 @@ class ThreadedReader implements AutoCloseable
         if ( this.started ) throw new IllegalStateException( "Thread has already started." );
         this.started = true;
 
-        this.thread = threadFactory.create( () ->
+        this.thread = this.threadFactory.create( () ->
         {
-            try
-            {
-                String line;
-                while (( line = reader.readLine() ) != null ) this.lines.add( line );
-            }
-            catch ( Exception e )
-            {
-                this.exception = e;
-            }
+            try { this.content = this.reader.readAllAsString(); }
+            catch ( Exception e ) { this.exception = e; }
         } );
 
         this.thread.start();
@@ -77,7 +67,7 @@ class ThreadedReader implements AutoCloseable
 
     void join()
     {
-        if ( thread == null ) return;
+        if ( this.thread == null ) return;
 
         try
         {
@@ -91,10 +81,10 @@ class ThreadedReader implements AutoCloseable
         }
     }
 
-    List< String > getLines()
+    String getContent()
     {
         this.verifyThreadStatus();
-        return this.lines;
+        return this.content;
     }
 
     Exception getException()

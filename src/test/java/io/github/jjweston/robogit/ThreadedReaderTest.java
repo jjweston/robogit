@@ -27,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -91,19 +90,19 @@ class ThreadedReaderTest
     }
 
     @Test
-    void testGetLines_notStarted()
+    void testGetContent_notStarted()
     {
         try ( ThreadedReader threadedReader =
                       new ThreadedReader( this.mockThreadUtil, this.mockThreadFactory, this.mockBufferedReader ))
         {
             IllegalStateException exception =
-                    assertThrowsExactly( IllegalStateException.class, threadedReader::getLines );
+                    assertThrowsExactly( IllegalStateException.class, threadedReader::getContent );
             assertEquals( "Thread has not started.", exception.getMessage() );
         }
     }
 
     @Test
-    void testGetLines_running()
+    void testGetContent_running()
     {
         when( this.mockThreadFactory.create( any() )).thenReturn( this.mockThread );
 
@@ -112,7 +111,7 @@ class ThreadedReaderTest
         {
             threadedReader.start();
             IllegalStateException exception =
-                    assertThrowsExactly( IllegalStateException.class, threadedReader::getLines );
+                    assertThrowsExactly( IllegalStateException.class, threadedReader::getContent );
             assertEquals( "Thread is still running.", exception.getMessage() );
         }
     }
@@ -147,7 +146,14 @@ class ThreadedReaderTest
     @Test
     void testSuccess() throws Exception
     {
-        when( this.mockBufferedReader.readLine() ).thenReturn( "Line 1", "Line 2", "Line 3", null );
+        String testContent =
+                """
+                Line 1
+                Line 2
+                Line 3
+                """;
+
+        when( this.mockBufferedReader.readAllAsString() ).thenReturn( testContent );
         this.mockThreadCreation();
 
         try ( ThreadedReader threadedReader =
@@ -155,7 +161,7 @@ class ThreadedReaderTest
         {
             threadedReader.start();
             threadedReader.join();
-            assertThat( threadedReader.getLines() ).as( "Lines" ).containsExactly( "Line 1", "Line 2", "Line 3" );
+            assertEquals( testContent, threadedReader.getContent() );
             assertNull( threadedReader.getException() );
         }
 
@@ -172,7 +178,7 @@ class ThreadedReaderTest
     void testException() throws Exception
     {
         IOException testException = new IOException( "Test IO Exception" );
-        when( this.mockBufferedReader.readLine() ).thenThrow( testException );
+        when( this.mockBufferedReader.readAllAsString() ).thenThrow( testException );
         this.mockThreadCreation();
 
         try ( ThreadedReader threadedReader =
@@ -180,7 +186,7 @@ class ThreadedReaderTest
         {
             threadedReader.start();
             threadedReader.join();
-            assertThat( threadedReader.getLines() ).as( "Lines" ).containsExactly();
+            assertNull( threadedReader.getContent() );
             assertEquals( testException, threadedReader.getException() );
         }
     }
