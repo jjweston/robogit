@@ -34,9 +34,9 @@ class ProcessRunner
 
     private boolean run = false;
 
-    private int            exitValue;
-    private List< String > stdOut;
-    private List< String > stdErr;
+    private int    exitValue;
+    private String stdOut;
+    private String stdErr;
 
     ProcessRunner( File directory, String... command )
     {
@@ -117,8 +117,8 @@ class ProcessRunner
                 throw exception;
             }
 
-            this.stdOut = stdOutReader.getLines();
-            this.stdErr = stdErrReader.getLines();
+            this.stdOut = stdOutReader.getContent();
+            this.stdErr = stdErrReader.getContent();
 
             if ( this.exitValue != 0 )
             {
@@ -138,20 +138,21 @@ class ProcessRunner
         return this.exitValue;
     }
 
-    List< String > getStdOut()
+    String getStdOut()
     {
         if ( !this.run ) throw new IllegalStateException( "Process has not run." );
         return this.stdOut;
     }
 
-    List< String > getStdErr()
+    String getStdErr()
     {
         if ( !this.run ) throw new IllegalStateException( "Process has not run." );
         return this.stdErr;
     }
 
-    private void appendLines( StringBuilder builder, String title, List< String > lines )
+    private void appendLines( StringBuilder builder, String title, String content )
     {
+        List< String > lines = content.lines().toList();
         if ( lines.isEmpty() ) return;
 
         builder.append( "\n\n" );
