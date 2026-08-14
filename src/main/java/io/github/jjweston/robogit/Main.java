@@ -48,9 +48,10 @@ class Main
                 .ofPattern( "uuuu-MM-dd HH:mm (XXX)" )
                 .withZone( ZoneId.systemDefault() );
 
-        Instant  nextTime   = Instant.now();
-        File     repository = new File( args[ 0 ] );
-        Duration interval   = Duration.ofMinutes( 1 );
+        FileLastModifiedUtil fileLastModifiedUtil = new FileLastModifiedUtil();
+        File                 repository           = new File( args[ 0 ] );
+        Duration             interval             = Duration.ofMinutes( 1 );
+        Instant              nextTime             = Instant.now();
 
         while ( true )
         {
@@ -79,8 +80,7 @@ class Main
             List< Long > modificationAges = filenames
                     .stream()
                     .map( filename -> new File( repository, filename ))
-                    .map( File::lastModified )
-                    .map( lastModified -> lastModified == 0 ? currentTime : Instant.ofEpochMilli( lastModified ))
+                    .map( file -> fileLastModifiedUtil.getLastModified( currentTime, file ))
                     .map( modificationTime -> Duration.between( modificationTime, currentTime ))
                     .map( Duration::toSeconds )
                     .toList();
