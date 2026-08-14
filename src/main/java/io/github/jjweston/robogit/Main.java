@@ -65,9 +65,11 @@ class Main
                     repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
             processRunner.run();
 
-            List< String > filenames = Arrays.stream( processRunner.getStdOut().split( "\0" ))
-                    .map( s -> s.substring( 3 ))
-                    .toList();
+            String stdOut = processRunner.getStdOut();
+            List< String > filenames = stdOut.isEmpty() ? List.of() :
+                    Arrays.stream( stdOut.split( "\0" ))
+                            .map( s -> s.substring( 3 ))
+                            .toList();
 
             List< String > displayFilenames = filenames
                     .stream()
@@ -120,8 +122,9 @@ class Main
 
                 System.out.println();
                 for ( String line : output ) System.out.println( line );
-                System.out.println();
             }
+
+            System.out.println();
 
             try
             {
