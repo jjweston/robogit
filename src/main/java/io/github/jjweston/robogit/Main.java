@@ -75,27 +75,35 @@ class Main
         System.out.format( "Repository    : %s%n", repository );
         System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
         System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
-        System.out.println();
 
         while ( true )
         {
+            if ( nextTime.compareTo( Instant.now() ) > 0 )
+            {
+                try
+                {
+                    Thread.sleep( Duration.between( Instant.now(), nextTime ));
+                }
+                catch ( InterruptedException e )
+                {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException( "InterruptedException occurred while sleeping.", e );
+                }
+            }
+
             Instant currentTime = nextTime;
             nextTime = currentTime.plus( pollInterval );
-
-            System.out.println( formatter.format( currentTime ));
-            System.out.println();
-            System.out.println( "Running `git status`" );
-            System.out.println();
 
             ProcessRunner gitStatus = new ProcessRunner(
                     repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
             gitStatus.run();
 
             String stdOut = gitStatus.getStdOut();
-            List< String > filenames = stdOut.isEmpty() ? List.of() :
-                    Arrays.stream( stdOut.split( "\0" ))
-                            .map( s -> s.substring( 3 ))
-                            .toList();
+            if ( stdOut.isEmpty() ) continue;
+
+            List< String > filenames = Arrays.stream( stdOut.split( "\0" ))
+                    .map( s -> s.substring( 3 ))
+                    .toList();
 
             List< String > displayFilenames = filenames
                     .stream()
@@ -123,75 +131,56 @@ class Main
                     .max()
                     .orElse( 1 );
 
-            if ( filenames.isEmpty() )
+            System.out.println();
+            System.out.println( formatter.format( currentTime ));
+            System.out.println();
+
+            String nameHeader = "Name";
+            String ageHeader = "Age";
+
+            if ( nameHeader.length() > maxFilenameLength ) maxFilenameLength = nameHeader.length();
+            if ( ageHeader.length() > maxModificationAgeLength ) maxModificationAgeLength = ageHeader.length();
+
+            String headerFormat = String.format( "%%-%ds | %%s%%n", maxFilenameLength );
+            System.out.format( headerFormat, nameHeader, ageHeader );
+            System.out.println( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
+
+            String outputFormat =
+                    String.format( "%%-%ds | %%,%dd%%n", maxFilenameLength, maxModificationAgeLength );
+            for ( int i =  0; i < displayFilenames.size(); i++ )
             {
-                System.out.println( "No Modified Files" );
-            }
-            else
-            {
-                System.out.println( "Modified Files:" );
-                System.out.println();
-
-                String nameHeader = "Name";
-                String ageHeader = "Age";
-
-                if ( nameHeader.length() > maxFilenameLength ) maxFilenameLength = nameHeader.length();
-                if ( ageHeader.length() > maxModificationAgeLength ) maxModificationAgeLength = ageHeader.length();
-
-                String headerFormat = String.format( "%%-%ds | %%s%%n", maxFilenameLength );
-                System.out.format( headerFormat, nameHeader, ageHeader );
-                System.out.println( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
-
-                String outputFormat =
-                        String.format( "%%-%ds | %%,%dd%%n", maxFilenameLength, maxModificationAgeLength );
-                for ( int i =  0; i < displayFilenames.size(); i++ )
-                {
-                    String filename = displayFilenames.get( i );
-                    Long modificationAge = modificationAges.get( i );
-                    System.out.format( outputFormat, filename, modificationAge );
-                }
-
-                long minModificationAge = modificationAges
-                        .stream()
-                        .mapToLong( Long::valueOf )
-                        .min()
-                        .orElse( 0L );
-
-                String minModificationAgeUnit = minModificationAge == 1 ? "second" : "seconds";
-
-                System.out.println();
-                System.out.format( "Minimum Age: %,d %s%n", minModificationAge, minModificationAgeUnit );
-
-                Duration minAgeInterval = Duration.ofSeconds( minModificationAge );
-                if ( minAgeInterval.compareTo( idleInterval ) >= 0 )
-                {
-                    System.out.println();
-                    System.out.println( "Committing Changes" );
-                    System.out.println();
-
-                    ProcessRunner gitAdd = new ProcessRunner( repository, "git", "add", "-A" );
-                    gitAdd.run();
-
-                    String message = "RoboGit Auto Commit: " + formatter.format( currentTime );
-                    ProcessRunner gitCommit = new ProcessRunner( repository, "git", "commit", "-m", message );
-                    gitCommit.run();
-                    gitCommit.getStdOut().lines().forEach( line -> System.out.println( "> " + line ));
-
-                    fileLastModifiedUtil.reset();
-                }
+                String filename = displayFilenames.get( i );
+                Long modificationAge = modificationAges.get( i );
+                System.out.format( outputFormat, filename, modificationAge );
             }
 
-            try
-            {
-                Thread.sleep( Duration.between( Instant.now(), nextTime ));
-            }
-            catch ( InterruptedException e )
-            {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException( "InterruptedException occurred while sleeping.", e );
-            }
+            long minModificationAge = modificationAges
+                    .stream()
+                    .mapToLong( Long::valueOf )
+                    .min()
+                    .orElse( 0L );
+
+            String minModificationAgeUnit = minModificationAge == 1 ? "second" : "seconds";
 
             System.out.println();
+            System.out.format( "Minimum Age: %,d %s%n", minModificationAge, minModificationAgeUnit );
+
+            Duration minAgeInterval = Duration.ofSeconds( minModificationAge );
+            if ( minAgeInterval.compareTo( idleInterval ) >= 0 )
+            {
+                System.out.println();
+                System.out.println( "Committing Changes" );
+
+                ProcessRunner gitAdd = new ProcessRunner( repository, "git", "add", "-A" );
+                gitAdd.run();
+
+                String message = "RoboGit Auto Commit: " + formatter.format( currentTime );
+                ProcessRunner gitCommit = new ProcessRunner( repository, "git", "commit", "-m", message );
+                gitCommit.run();
+                gitCommit.getStdOut().lines().forEach( line -> System.out.println( "> " + line ));
+
+                fileLastModifiedUtil.reset();
+            }
         }
     }
 }
