@@ -66,6 +66,7 @@ public class FileLastModifiedUtilTest
         Instant time5 = Instant.parse( "2026-08-14T05:00:00Z" );
         Instant time6 = Instant.parse( "2026-08-14T06:00:00Z" );
         Instant time7 = Instant.parse( "2026-08-14T07:00:00Z" );
+        Instant time8 = Instant.parse( "2026-08-14T08:00:00Z" );
 
         File file1 = spy( new File( "test-1.txt" ));
         File file2 = spy( new File( "test-2.txt" ));
@@ -84,5 +85,10 @@ public class FileLastModifiedUtilTest
         assertEquals( time6, fileLastModifiedUtil.getLastModified( time6, file2 ));
         assertEquals( time6, fileLastModifiedUtil.getLastModified( time7, file2 ));
         assertEquals( time7, fileLastModifiedUtil.getLastModified( time7, file3 ));
+
+        fileLastModifiedUtil.reset();
+
+        assertEquals( time8, fileLastModifiedUtil.getLastModified( time8, file2 ));
+        assertEquals( time8, fileLastModifiedUtil.getLastModified( time8, file3 ));
     }
 }
