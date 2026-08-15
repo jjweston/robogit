@@ -48,6 +48,9 @@ class Main
                 .ofPattern( "uuuu-MM-dd HH:mm (XXX)" )
                 .withZone( ZoneId.systemDefault() );
 
+        String version = Main.class.getPackage().getImplementationVersion();
+        if ( version == null ) version = "unknown";
+
         FileLastModifiedUtil fileLastModifiedUtil = new FileLastModifiedUtil();
         File                 repository           = new File( args[ 0 ] );
         int                  pollIntervalMinutes  = 1;
@@ -70,7 +73,7 @@ class Main
 
         String intervalFormat = String.format( "%%s Interval : %%,%dd %%s%%n", maxIntervalMinutesLength );
 
-        System.out.println( "RoboGit Running" );
+        System.out.println( "RoboGit Version " + version );
         System.out.println();
         System.out.format( "Repository    : %s%n", repository );
         System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
