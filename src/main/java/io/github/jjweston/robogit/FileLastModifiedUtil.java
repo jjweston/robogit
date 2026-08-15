@@ -47,4 +47,9 @@ class FileLastModifiedUtil
             return Instant.ofEpochMilli( lastModified );
         }
     }
+
+    void reset()
+    {
+        this.lastModifiedMap.clear();
+    }
 }
