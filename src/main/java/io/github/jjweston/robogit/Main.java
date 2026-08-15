@@ -43,7 +43,7 @@ class Main
         }
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter
-                .ofPattern( "uuuu-MM-dd HH:mm (XXX)" )
+                .ofPattern( "uuuu-MM-dd HH:mm (xxx)" )
                 .withZone( ZoneId.systemDefault() );
 
         String version = Main.class.getPackage().getImplementationVersion();
