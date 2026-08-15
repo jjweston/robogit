@@ -64,6 +64,7 @@ class GitStatus
 
         List< String > filenames = Arrays.stream( stdOut.split( "\0" ))
                 .map( s -> s.substring( 3 ))
+                .sorted()
                 .toList();
 
         List< String > displayFilenames = filenames

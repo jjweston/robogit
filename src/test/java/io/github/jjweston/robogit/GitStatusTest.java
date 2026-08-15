@@ -174,9 +174,9 @@ class GitStatusTest
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
         inOrder.verify( this.mockRoboGitLogger ).println( "Name    | Age" );
         inOrder.verify( this.mockRoboGitLogger ).println( "--------+-------" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "bar.txt |  7,200" );
         inOrder.verify( this.mockRoboGitLogger ).println( "baz.txt | 10,800" );
         inOrder.verify( this.mockRoboGitLogger ).println( "foo.txt |  3,600" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "bar.txt |  7,200" );
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
         inOrder.verify( this.mockRoboGitLogger ).println( "Minimum Age: 3,600 seconds" );
 
