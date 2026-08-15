@@ -57,6 +57,8 @@ class Main
         int                  idleIntervalMinutes  = 5;
         Duration             pollInterval         = Duration.ofMinutes( pollIntervalMinutes );
         Duration             idleInterval         = Duration.ofMinutes( idleIntervalMinutes );
+        boolean              displayConfiguration = true;
+        boolean              firstIteration       = true;
         Instant              nextTime             = Instant.now();
 
         @SuppressWarnings( "ConstantValue" )
@@ -71,16 +73,23 @@ class Main
                 .max()
                 .orElse( 1 );
 
-        String intervalFormat = String.format( "%%s Interval : %%,%dd %%s%%n", maxIntervalMinutesLength );
-
-        System.out.println( "RoboGit Version " + version );
-        System.out.println();
-        System.out.format( "Repository    : %s%n", repository );
-        System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
-        System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
+        String intervalFormat = String.format( "%%s Interval   : %%,%dd %%s%%n", maxIntervalMinutesLength );
 
         while ( true )
         {
+            if ( displayConfiguration )
+            {
+                displayConfiguration = false;
+
+                if ( !firstIteration ) System.out.println();
+                else firstIteration = false;
+
+                System.out.println( "RoboGit Version : " + version );
+                System.out.println( "Repository      : " + repository );
+                System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
+                System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
+            }
+
             if ( nextTime.compareTo( Instant.now() ) > 0 )
             {
                 try
@@ -183,6 +192,7 @@ class Main
                 gitCommit.getStdOut().lines().forEach( line -> System.out.println( "> " + line ));
 
                 fileLastModifiedUtil.reset();
+                displayConfiguration = true;
             }
         }
     }
