@@ -26,7 +26,7 @@ RoboGit works with version `2.52.0`, but other versions may also work.
 
 To build RoboGit: `mvn package`
 
-To run RoboGit: `mvn exec:java -Dexec.args="<Git repository>"`
+To run RoboGit: `java -jar target/robogit-1.0.0-SNAPSHOT.jar <Git repository>`
 
 Replace `<Git repository>` with the location of your Git repository.
 

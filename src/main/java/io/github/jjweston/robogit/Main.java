@@ -38,7 +38,7 @@ class Main
         {
             System.err.println( "Error: Git repository not specified." );
             System.err.println();
-            System.err.println( "Usage: `mvn exec:java -Dexec.args=\"<Git repository>\"`" );
+            System.err.println( "Usage: `java -jar target/robogit-1.0.0-SNAPSHOT.jar <Git repository>`" );
             System.err.println();
             System.err.println( "Replace `<Git repository>` with the location of your Git repository." );
             System.exit( 1 );
