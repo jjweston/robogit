@@ -23,8 +23,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Stream;
 
 class Main
@@ -44,7 +42,7 @@ class Main
             System.exit( 1 );
         }
 
-        DateTimeFormatter formatter = DateTimeFormatter
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter
                 .ofPattern( "uuuu-MM-dd HH:mm (XXX)" )
                 .withZone( ZoneId.systemDefault() );
 
@@ -74,6 +72,8 @@ class Main
                 .orElse( 1 );
 
         String intervalFormat = String.format( "%%s Interval   : %%,%dd %%s%%n", maxIntervalMinutesLength );
+
+        GitStatus gitStatus = new GitStatus( fileLastModifiedUtil, dateTimeFormatter, repository );
 
         while ( true )
         {
@@ -106,79 +106,7 @@ class Main
             Instant currentTime = nextTime;
             nextTime = currentTime.plus( pollInterval );
 
-            ProcessRunner gitStatus = new ProcessRunner(
-                    repository, "git", "status", "-z", "--porcelain=v1", "--untracked-files=all", "--no-renames" );
-            gitStatus.run();
-
-            String stdOut = gitStatus.getStdOut();
-            if ( stdOut.isEmpty() ) continue;
-
-            List< String > filenames = Arrays.stream( stdOut.split( "\0" ))
-                    .map( s -> s.substring( 3 ))
-                    .toList();
-
-            List< String > displayFilenames = filenames
-                    .stream()
-                    .map( Util::escapeFilename )
-                    .toList();
-
-            List< Long > modificationAges = filenames
-                    .stream()
-                    .map( filename -> new File( repository, filename ))
-                    .map( file -> fileLastModifiedUtil.getLastModified( currentTime, file ))
-                    .map( modificationTime -> Duration.between( modificationTime, currentTime ))
-                    .map( Duration::toSeconds )
-                    .toList();
-
-            int maxFilenameLength = displayFilenames
-                    .stream()
-                    .mapToInt( String::length )
-                    .max()
-                    .orElse( 1 );
-
-            int maxModificationAgeLength = modificationAges
-                    .stream()
-                    .map( age -> String.format( "%,d", age ))
-                    .mapToInt( String::length )
-                    .max()
-                    .orElse( 1 );
-
-            System.out.println();
-            System.out.println( formatter.format( currentTime ));
-            System.out.println();
-
-            String nameHeader = "Name";
-            String ageHeader = "Age";
-
-            if ( nameHeader.length() > maxFilenameLength ) maxFilenameLength = nameHeader.length();
-            if ( ageHeader.length() > maxModificationAgeLength ) maxModificationAgeLength = ageHeader.length();
-
-            String headerFormat = String.format( "%%-%ds | %%s%%n", maxFilenameLength );
-            System.out.format( headerFormat, nameHeader, ageHeader );
-            System.out.println( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
-
-            String outputFormat =
-                    String.format( "%%-%ds | %%,%dd%%n", maxFilenameLength, maxModificationAgeLength );
-            for ( int i =  0; i < displayFilenames.size(); i++ )
-            {
-                String filename = displayFilenames.get( i );
-                Long modificationAge = modificationAges.get( i );
-                System.out.format( outputFormat, filename, modificationAge );
-            }
-
-            long minModificationAge = modificationAges
-                    .stream()
-                    .mapToLong( Long::valueOf )
-                    .min()
-                    .orElse( 0L );
-
-            String minModificationAgeUnit = minModificationAge == 1 ? "second" : "seconds";
-
-            System.out.println();
-            System.out.format( "Minimum Age: %,d %s%n", minModificationAge, minModificationAgeUnit );
-
-            Duration minAgeInterval = Duration.ofSeconds( minModificationAge );
-            if ( minAgeInterval.compareTo( idleInterval ) >= 0 )
+            if ( gitStatus.getModificationAge( currentTime ).compareTo( idleInterval ) >= 0 )
             {
                 System.out.println();
                 System.out.println( "Committing Changes" );
@@ -186,7 +114,7 @@ class Main
                 ProcessRunner gitAdd = new ProcessRunner( repository, "git", "add", "-A" );
                 gitAdd.run();
 
-                String message = "RoboGit Auto Commit: " + formatter.format( currentTime );
+                String message = "RoboGit Auto Commit: " + dateTimeFormatter.format( currentTime );
                 ProcessRunner gitCommit = new ProcessRunner( repository, "git", "commit", "-m", message );
                 gitCommit.run();
                 gitCommit.getStdOut().lines().forEach( line -> System.out.println( "> " + line ));
