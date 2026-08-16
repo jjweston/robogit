@@ -1,6 +1,6 @@
 # RoboGit
 
-RoboGit periodically checks for changes in the working tree of a Git repository and commits them.
+Periodically check a Git repository for changes to the working tree and commit them.
 
 ## Prerequisites
 
@@ -26,11 +26,19 @@ RoboGit works with version `2.52.0`, but other versions may also work.
 
 To build RoboGit: `mvn package`
 
-To run RoboGit: `java -jar target/robogit-1.0.0-SNAPSHOT.jar <Git repository>`
+To run RoboGit: `java -jar target/robogit-1.0.0-SNAPSHOT.jar [options] <repository>`
 
-Replace `<Git repository>` with the location of your Git repository.
+RoboGit supports the following command-line options:
 
-RoboGit periodically checks for changes in the specified Git repository
+```text
+Usage: robogit [-hV] <repository>
+Periodically check a Git repository for changes to the working tree and commit them.
+      <repository>   path to the Git repository
+  -h, --help         Show this help message and exit.
+  -V, --version      Print version information and exit.
+```
+
+RoboGit periodically checks the repository for changes to the working tree
 using a specified poll interval (currently hard coded as one minute).
 RoboGit commits changes when the modification age on every changed file
 is at least as old as a specified idle interval (currently hard coded as five minutes).

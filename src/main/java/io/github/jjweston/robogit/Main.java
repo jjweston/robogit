@@ -18,46 +18,48 @@ limitations under the License.
 
 package io.github.jjweston.robogit;
 
+import picocli.CommandLine;
+
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
-class Main
+@CommandLine.Command( name = "robogit", versionProvider = VersionProvider.class,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+        description = "Periodically check a Git repository for changes to the working tree and commit them." )
+class Main implements Callable< Integer >
 {
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter
+            .ofPattern( "uuuu-MM-dd HH:mm (xxx)" )
+            .withZone( ZoneId.systemDefault() );
+
+    private final FileLastModifiedUtil fileLastModifiedUtil = new FileLastModifiedUtil();
+
+    @CommandLine.Parameters( description = "path to the Git repository" )
+    private File repository;
+
     private Main() {}
 
-    @SuppressWarnings( "InfiniteLoopStatement" )
     static void main( String[] args )
     {
-        if ( args.length < 1 )
-        {
-            System.err.println( "Error: Git repository not specified." );
-            System.err.println();
-            System.err.println( "Usage: `java -jar target/robogit-1.0.0-SNAPSHOT.jar <Git repository>`" );
-            System.err.println();
-            System.err.println( "Replace `<Git repository>` with the location of your Git repository." );
-            System.exit( 1 );
-        }
+        CommandLine commandLine = new CommandLine( new Main() );
+        System.exit( commandLine.execute( args ));
+    }
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter
-                .ofPattern( "uuuu-MM-dd HH:mm (xxx)" )
-                .withZone( ZoneId.systemDefault() );
-
-        String version = Main.class.getPackage().getImplementationVersion();
-        if ( version == null ) version = "unknown";
-
-        FileLastModifiedUtil fileLastModifiedUtil = new FileLastModifiedUtil();
-        File                 repository           = new File( args[ 0 ] );
-        int                  pollIntervalMinutes  = 1;
-        int                  idleIntervalMinutes  = 5;
-        Duration             pollInterval         = Duration.ofMinutes( pollIntervalMinutes );
-        Duration             idleInterval         = Duration.ofMinutes( idleIntervalMinutes );
-        boolean              displayConfiguration = true;
-        boolean              firstIteration       = true;
-        Instant              nextTime             = Instant.now();
+    @SuppressWarnings( "InfiniteLoopStatement" )
+    public Integer call()
+    {
+        int      pollIntervalMinutes  = 1;
+        int      idleIntervalMinutes  = 5;
+        Duration pollInterval         = Duration.ofMinutes( pollIntervalMinutes );
+        Duration idleInterval         = Duration.ofMinutes( idleIntervalMinutes );
+        boolean  displayConfiguration = true;
+        boolean  firstIteration       = true;
+        Instant  nextTime             = Instant.now();
 
         @SuppressWarnings( "ConstantValue" )
         String pollIntervalMinutesUnit = pollIntervalMinutes == 1 ? "minute" : "minutes";
@@ -73,7 +75,7 @@ class Main
 
         String intervalFormat = String.format( "%%s Interval   : %%,%dd %%s%%n", maxIntervalMinutesLength );
 
-        GitStatus gitStatus = new GitStatus( fileLastModifiedUtil, dateTimeFormatter, repository );
+        GitStatus gitStatus = new GitStatus( this.fileLastModifiedUtil, this.dateTimeFormatter, this.repository );
 
         while ( true )
         {
@@ -84,8 +86,8 @@ class Main
                 if ( !firstIteration ) System.out.println();
                 else firstIteration = false;
 
-                System.out.println( "RoboGit Version : " + version );
-                System.out.println( "Repository      : " + repository );
+                System.out.println( "RoboGit Version : " + VersionUtil.getVersion() );
+                System.out.println( "Repository      : " + this.repository );
                 System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
                 System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
             }
@@ -111,15 +113,15 @@ class Main
                 System.out.println();
                 System.out.println( "Committing Changes" );
 
-                ProcessRunner gitAdd = new ProcessRunner( repository, "git", "add", "-A" );
+                ProcessRunner gitAdd = new ProcessRunner( this.repository, "git", "add", "-A" );
                 gitAdd.run();
 
-                String message = "RoboGit Auto Commit: " + dateTimeFormatter.format( currentTime );
-                ProcessRunner gitCommit = new ProcessRunner( repository, "git", "commit", "-m", message );
+                String message = "RoboGit Auto Commit: " + this.dateTimeFormatter.format( currentTime );
+                ProcessRunner gitCommit = new ProcessRunner( this.repository, "git", "commit", "-m", message );
                 gitCommit.run();
                 gitCommit.getStdOut().lines().forEach( line -> System.out.println( "> " + line ));
 
-                fileLastModifiedUtil.reset();
+                this.fileLastModifiedUtil.reset();
                 displayConfiguration = true;
             }
         }
