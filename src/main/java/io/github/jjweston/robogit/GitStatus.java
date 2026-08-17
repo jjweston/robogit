@@ -72,12 +72,16 @@ class GitStatus
                 .map( Util::escapeFilename )
                 .toList();
 
-        List< Long > modificationAges = filenames
+        List< Duration > modificationAges = filenames
                 .stream()
                 .map( filename -> new File( this.repository, filename ))
                 .map( file -> this.fileLastModifiedUtil.getLastModified( currentTime, file ))
                 .map( modificationTime -> Duration.between( modificationTime, currentTime ))
-                .map( Duration::toSeconds )
+                .toList();
+
+        List< String > modificationAgeStrings = modificationAges
+                .stream()
+                .map( DurationFormatter::format )
                 .toList();
 
         int maxFilenameLength = displayFilenames
@@ -86,9 +90,8 @@ class GitStatus
                 .max()
                 .orElse( 1 );
 
-        int maxModificationAgeLength = modificationAges
+        int maxModificationAgeStringLength = modificationAgeStrings
                 .stream()
-                .map( age -> String.format( "%,d", age ))
                 .mapToInt( String::length )
                 .max()
                 .orElse( 1 );
@@ -101,31 +104,28 @@ class GitStatus
         String ageHeader = "Age";
 
         if ( nameHeader.length() > maxFilenameLength ) maxFilenameLength = nameHeader.length();
-        if ( ageHeader.length() > maxModificationAgeLength ) maxModificationAgeLength = ageHeader.length();
+        if ( ageHeader.length() > maxModificationAgeStringLength ) maxModificationAgeStringLength = ageHeader.length();
 
         String headerFormat = String.format( "%%-%ds | %%s", maxFilenameLength );
         this.roboGitLogger.println( String.format( headerFormat, nameHeader, ageHeader ));
-        this.roboGitLogger.println( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeLength ));
+        this.roboGitLogger.println( "-".repeat( maxFilenameLength ) + "-+-" + "-".repeat( maxModificationAgeStringLength ));
 
-        String outputFormat = String.format( "%%-%ds | %%,%dd", maxFilenameLength, maxModificationAgeLength );
+        String outputFormat = String.format( "%%-%ds | %%%ds", maxFilenameLength, maxModificationAgeStringLength );
         for ( int i =  0; i < displayFilenames.size(); i++ )
         {
             String filename = displayFilenames.get( i );
-            Long modificationAge = modificationAges.get( i );
-            this.roboGitLogger.println( String.format( outputFormat, filename, modificationAge ));
+            String age = modificationAgeStrings.get( i );
+            this.roboGitLogger.println( String.format( outputFormat, filename, age ));
         }
 
-        long minModificationAge = modificationAges
+        Duration minModificationAge = modificationAges
                 .stream()
-                .mapToLong( Long::valueOf )
-                .min()
-                .orElse( 0L );
-
-        String minModificationAgeUnit = minModificationAge == 1 ? "second" : "seconds";
+                .min( Duration::compareTo )
+                .orElse( Duration.ZERO );
 
         this.roboGitLogger.println( "" );
-        this.roboGitLogger.println( String.format( "Minimum Age: %,d %s", minModificationAge, minModificationAgeUnit ));
+        this.roboGitLogger.println( "Minimum Age: " + DurationFormatter.format( minModificationAge ));
 
-        return Duration.ofSeconds( minModificationAge );
+        return minModificationAge;
     }
 }

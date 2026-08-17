@@ -133,9 +133,9 @@ class GitStatusTest
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
         inOrder.verify( this.mockRoboGitLogger ).println( "Name    | Age" );
         inOrder.verify( this.mockRoboGitLogger ).println( "--------+----" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "foo.txt |   1" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "foo.txt |  1s" );
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "Minimum Age: 1 second" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "Minimum Age:  1s" );
 
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockRoboGitLogger );
@@ -144,14 +144,14 @@ class GitStatusTest
     @Test
     void testGetModificationAge_success()
     {
-        Instant time1 = Instant.parse( "2026-08-15T01:00:00Z" );
+        Instant time1 = Instant.parse( "2026-08-10T01:00:00Z" );
         Instant time2 = Instant.parse( "2026-08-15T02:00:00Z" );
         Instant time3 = Instant.parse( "2026-08-15T03:00:00Z" );
         Instant time4 = Instant.parse( "2026-08-15T04:00:00Z" );
 
-        File file1 = new File( this.testRepository, "baz.txt" );
-        File file2 = new File( this.testRepository, "foo.txt" );
-        File file3 = new File( this.testRepository, "bar.txt" );
+        File file1 = new File( this.testRepository, "bar.txt" );
+        File file2 = new File( this.testRepository, "baz.txt" );
+        File file3 = new File( this.testRepository, "foo.txt" );
 
         GitStatus gitStatus = new GitStatus(
                 this.mockRoboGitLogger, this.mockProcessRunnerFactory,
@@ -162,8 +162,8 @@ class GitStatusTest
         when( this.mockProcessRunner.getStdOut() ).thenReturn( " M baz.txt\0 D foo.txt\0?? bar.txt" );
 
         when( this.mockFileLastModifiedUtil.getLastModified( time4, file1 )).thenReturn( time1 );
-        when( this.mockFileLastModifiedUtil.getLastModified( time4, file2 )).thenReturn( time3 );
-        when( this.mockFileLastModifiedUtil.getLastModified( time4, file3 )).thenReturn( time2 );
+        when( this.mockFileLastModifiedUtil.getLastModified( time4, file2 )).thenReturn( time2 );
+        when( this.mockFileLastModifiedUtil.getLastModified( time4, file3 )).thenReturn( time3 );
 
         assertEquals( Duration.ofSeconds( 3_600 ), gitStatus.getModificationAge( time4 ));
 
@@ -173,12 +173,12 @@ class GitStatusTest
         inOrder.verify( this.mockRoboGitLogger ).println( "2026-08-15 04:00 (+00:00)" );
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
         inOrder.verify( this.mockRoboGitLogger ).println( "Name    | Age" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "--------+-------" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "bar.txt |  7,200" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "baz.txt | 10,800" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "foo.txt |  3,600" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "--------+-------------" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "bar.txt | 123h  0m  0s" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "baz.txt |   2h  0m  0s" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "foo.txt |   1h  0m  0s" );
         inOrder.verify( this.mockRoboGitLogger ).println( "" );
-        inOrder.verify( this.mockRoboGitLogger ).println( "Minimum Age: 3,600 seconds" );
+        inOrder.verify( this.mockRoboGitLogger ).println( "Minimum Age: 1h  0m  0s" );
 
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockRoboGitLogger );
