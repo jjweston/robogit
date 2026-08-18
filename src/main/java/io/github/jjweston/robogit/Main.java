@@ -55,6 +55,10 @@ class Main implements Callable< Integer >
             description = "how long changed files must remain untouched before committing (default: ${DEFAULT-VALUE})" )
     private Duration quietPeriod;
 
+    @CommandLine.Option( names = "--dry-run",
+            description = "Show list of changed files and exit without committing changes." )
+    private boolean dryRun;
+
     @CommandLine.Parameters( description = "path to the Git repository" )
     private File repository;
 
@@ -66,7 +70,6 @@ class Main implements Callable< Integer >
         System.exit( commandLine.execute( args ));
     }
 
-    @SuppressWarnings( "InfiniteLoopStatement" )
     public Integer call()
     {
         boolean  displayConfiguration = true;
@@ -115,7 +118,16 @@ class Main implements Callable< Integer >
             Instant currentTime = nextTime;
             nextTime = currentTime.plus( this.pollInterval );
 
-            if ( gitStatus.getModificationAge( currentTime ).compareTo( this.quietPeriod ) >= 0 )
+            Duration modificationAge = gitStatus.getModificationAge( currentTime );
+
+            if ( this.dryRun )
+            {
+                System.out.println();
+                System.out.println( "(Dry Run)" );
+                return 0;
+            }
+
+            if ( modificationAge.compareTo( this.quietPeriod ) >= 0 )
             {
                 System.out.println();
                 System.out.println( "Committing Changes" );
