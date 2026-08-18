@@ -73,7 +73,7 @@ class Main implements Callable< Integer >
                 .max()
                 .orElse( 1 );
 
-        String intervalFormat = String.format( "%%s Interval   : %%,%dd %%s%%n", maxIntervalMinutesLength );
+        String intervalFormat = String.format( "%%s Interval : %%,%dd %%s%%n", maxIntervalMinutesLength );
 
         GitStatus gitStatus = new GitStatus( this.fileLastModifiedUtil, this.dateTimeFormatter, this.repository );
 
@@ -86,8 +86,9 @@ class Main implements Callable< Integer >
                 if ( !firstIteration ) System.out.println();
                 else firstIteration = false;
 
-                System.out.println( "RoboGit Version : " + VersionUtil.getVersion() );
-                System.out.println( "Repository      : " + this.repository );
+                System.out.println( "RoboGit " + VersionUtil.getVersion() );
+                System.out.println();
+                System.out.println( "Repository    : " + this.repository );
                 System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
                 System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
             }
