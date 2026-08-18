@@ -31,17 +31,19 @@ To run RoboGit: `java -jar target/robogit-1.0.0-SNAPSHOT.jar [options] <reposito
 RoboGit supports the following command-line options:
 
 ```text
-Usage: robogit [-hV] <repository>
+Usage: robogit [-hV] [--poll-interval=<duration>] [--quiet-period=<duration>] <repository>
 Periodically check a Git repository for changes to the working tree and commit them.
       <repository>   path to the Git repository
+      --poll-interval=<duration>
+                     how often to check for changes (default: 1m)
+      --quiet-period=<duration>
+                     how long changed files must remain untouched before committing (default: 5m)
   -h, --help         Show this help message and exit.
   -V, --version      Print version information and exit.
-```
 
-RoboGit periodically checks the repository for changes to the working tree
-using a specified poll interval (currently hard coded as one minute).
-RoboGit commits changes when the modification age on every changed file
-is at least as old as a specified quiet period (currently hard coded as five minutes).
+<duration> Durations are specified as a positive number followed by a unit:
+           s = seconds, m = minutes, h = hours (for example: 30s, 5m, 1h)
+```
 
 ## License
 
