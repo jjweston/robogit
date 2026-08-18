@@ -54,9 +54,9 @@ class Main implements Callable< Integer >
     public Integer call()
     {
         int      pollIntervalMinutes  = 1;
-        int      idleIntervalMinutes  = 5;
+        int      quietPeriodMinutes   = 5;
         Duration pollInterval         = Duration.ofMinutes( pollIntervalMinutes );
-        Duration idleInterval         = Duration.ofMinutes( idleIntervalMinutes );
+        Duration quietPeriod          = Duration.ofMinutes( quietPeriodMinutes  );
         boolean  displayConfiguration = true;
         boolean  firstIteration       = true;
         Instant  nextTime             = Instant.now();
@@ -65,15 +65,15 @@ class Main implements Callable< Integer >
         String pollIntervalMinutesUnit = pollIntervalMinutes == 1 ? "minute" : "minutes";
 
         @SuppressWarnings( "ConstantValue" )
-        String idleIntervalMinutesUnit = idleIntervalMinutes == 1 ? "minute" : "minutes";
+        String quietPeriodMinutesUnit = quietPeriodMinutes == 1 ? "minute" : "minutes";
 
-        int maxIntervalMinutesLength = Stream.of( pollIntervalMinutes, idleIntervalMinutes )
+        int maxDurationMinutesLength = Stream.of( pollIntervalMinutes, quietPeriodMinutes )
                 .map( Object::toString )
                 .mapToInt( String::length )
                 .max()
                 .orElse( 1 );
 
-        String intervalFormat = String.format( "%%s Interval : %%,%dd %%s%%n", maxIntervalMinutesLength );
+        String durationFormat = String.format( "%%s : %%,%dd %%s%%n", maxDurationMinutesLength );
 
         GitStatus gitStatus = new GitStatus( this.fileLastModifiedUtil, this.dateTimeFormatter, this.repository );
 
@@ -89,8 +89,8 @@ class Main implements Callable< Integer >
                 System.out.println( "RoboGit " + VersionUtil.getVersion() );
                 System.out.println();
                 System.out.println( "Repository    : " + this.repository );
-                System.out.format( intervalFormat, "Poll", pollIntervalMinutes, pollIntervalMinutesUnit );
-                System.out.format( intervalFormat, "Idle", idleIntervalMinutes, idleIntervalMinutesUnit );
+                System.out.format( durationFormat, "Poll Interval", pollIntervalMinutes, pollIntervalMinutesUnit );
+                System.out.format( durationFormat, "Quiet Period ", quietPeriodMinutes,  quietPeriodMinutesUnit  );
             }
 
             if ( nextTime.compareTo( Instant.now() ) > 0 )
@@ -109,7 +109,7 @@ class Main implements Callable< Integer >
             Instant currentTime = nextTime;
             nextTime = currentTime.plus( pollInterval );
 
-            if ( gitStatus.getModificationAge( currentTime ).compareTo( idleInterval ) >= 0 )
+            if ( gitStatus.getModificationAge( currentTime ).compareTo( quietPeriod ) >= 0 )
             {
                 System.out.println();
                 System.out.println( "Committing Changes" );

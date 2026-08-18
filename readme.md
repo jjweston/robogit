@@ -41,7 +41,7 @@ Periodically check a Git repository for changes to the working tree and commit t
 RoboGit periodically checks the repository for changes to the working tree
 using a specified poll interval (currently hard coded as one minute).
 RoboGit commits changes when the modification age on every changed file
-is at least as old as a specified idle interval (currently hard coded as five minutes).
+is at least as old as a specified quiet period (currently hard coded as five minutes).
 
 ## License
 
