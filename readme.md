@@ -31,13 +31,18 @@ To run RoboGit: `java -jar target/robogit-1.0.0-SNAPSHOT.jar [options] <reposito
 RoboGit supports the following command-line options:
 
 ```text
-Usage: robogit [-hV] [--poll-interval=<duration>] [--quiet-period=<duration>] <repository>
-Periodically check a Git repository for changes to the working tree and commit them.
+Usage: robogit [-hV] [--dry-run] [--poll-interval=<duration>]
+               [--quiet-period=<duration>] <repository>
+Periodically check a Git repository for changes to the working tree and commit
+them.
       <repository>   path to the Git repository
       --poll-interval=<duration>
                      how often to check for changes (default: 1m)
       --quiet-period=<duration>
-                     how long changed files must remain untouched before committing (default: 5m)
+                     how long changed files must remain untouched before
+                       committing (default: 5m)
+      --dry-run      Show list of changed files and exit without committing
+                       changes.
   -h, --help         Show this help message and exit.
   -V, --version      Print version information and exit.
 
