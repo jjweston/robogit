@@ -56,6 +56,46 @@ them.
            s = seconds, m = minutes, h = hours (for example: 30s, 5m, 1h)
 ```
 
+## Release Process
+
+The following files must be updated when changing the version number:
+
+- [`pom.xml`](pom.xml)
+- [`readme.md`](readme.md)
+- [`src/assembly/readme.txt`](src/assembly/readme.txt)
+
+For a release:
+
+- Create an issue and branch for preparing the release:
+  - Issue: `Prepare for [version] release.`
+  - Branch: `issue/[#]-release-[version]`
+- Remove the `SNAPSHOT` qualifier from the version number.
+- Create and merge a pull request with the above change.
+- Create a tag.
+- Build the distribution files from the tagged commit: `mvn clean package`
+- Create a release for the tag and attach the distribution files:
+  - `robogit-[version].tar.gz`
+  - `robogit-[version].zip`
+
+For a release candidate:
+
+- Follow the instructions above,
+  but instead of removing the `SNAPSHOT` qualifier from the version number,
+  replace `SNAPSHOT` with a release-candidate qualifier (such as `RC1`).
+- Create an issue and branch for restoring the `SNAPSHOT` qualifier to the version number:
+  - Issue: `Restore [version] snapshot.`
+  - Branch: `issue/[#]-snapshot-[version]`
+- Replace the release-candidate qualifier (such as `RC1`) with the `SNAPSHOT` qualifier in the version number.
+- Create and merge a pull request with the above change.
+
+Before starting work on the next version:
+
+- Create an issue and branch for starting the next version:
+  - Issue: `Start [version] snapshot.`
+  - Branch: `issue/[#]-start-[version]`
+- Update the version number to `[version]-SNAPSHOT`.
+- Create and merge a pull request with the above change.
+
 ## License
 
 ```text
