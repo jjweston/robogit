@@ -61,7 +61,6 @@ them.
 The following files must be updated when changing the version number:
 
 - [`pom.xml`](pom.xml)
-- [`readme.md`](readme.md)
 - [`src/assembly/readme.txt`](src/assembly/readme.txt)
 
 For a release:
@@ -71,17 +70,27 @@ For a release:
   - Branch: `issue/[#]-release-[version]`
 - Remove the `SNAPSHOT` qualifier from the version number.
 - Create and merge a pull request with the above change.
-- Create a tag.
-- Build the distribution files from the tagged commit: `mvn clean package`
-- Create a release for the tag and attach the distribution files:
-  - `robogit-[version].tar.gz`
-  - `robogit-[version].zip`
+- Create a tag: `git tag -a v[version] -m "Version [version]"`
+- Build the distribution files from the tagged commit:
+  - `git checkout v[version]`
+  - `mvn clean package`
+- Create the release on GitHub:
+  - Push the tag to GitHub: `git push origin v[version]`
+  - Open the [tags](https://github.com/jjweston/robogit/tags) page.
+  - Click on *Create release from tag*.
+  - Click on the newly created tag.
+  - For *Release title*, use: `Version [version]`
+  - For *Release notes*, provide a change log or reason for the release.
+  - Attach the distribution files:
+    - `robogit-[version].tar.gz`
+    - `robogit-[version].zip`
 
 For a release candidate:
 
-- Follow the instructions above,
-  but instead of removing the `SNAPSHOT` qualifier from the version number,
-  replace `SNAPSHOT` with a release-candidate qualifier (such as `RC1`).
+- Follow the instructions above, with the following modifications:
+  - Instead of removing the `SNAPSHOT` qualifier from the version number,
+    replace `SNAPSHOT` with a release-candidate qualifier (such as `RC1`).
+  - When creating the release on GitHub, mark it as a *Pre-Release* version.
 - Create an issue and branch for restoring the `SNAPSHOT` qualifier to the version number:
   - Issue: `Restore [version] snapshot.`
   - Branch: `issue/[#]-snapshot-[version]`
