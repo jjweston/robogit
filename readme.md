@@ -10,7 +10,7 @@ You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build RoboG
 You need a Java virtual machine to run RoboGit.
 We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
 
-RoboGit works with following versions, but other versions may also work:
+RoboGit is tested with the following versions, but other versions may also work:
 
 - Eclipse Temurin:
   - `25.0.1+8-LTS`
@@ -21,7 +21,7 @@ RoboGit works with following versions, but other versions may also work:
 
 You need the [Git](https://git-scm.com/) command-line tools to run RoboGit.
 
-RoboGit works with version `2.52.0`, but other versions may also work.
+RoboGit is tested with version `2.52.0`, but other versions may also work.
 
 ## Building and Running
 
