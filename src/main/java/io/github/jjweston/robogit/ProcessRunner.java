@@ -71,7 +71,10 @@ class ProcessRunner
 
         Process process;
         try { process = processBuilder.start(); }
-        catch ( IOException e ) { throw new RuntimeException( "IOException occurred while starting process.", e ); }
+        catch ( IOException e )
+        {
+            throw new ProcessStartException( "IOException occurred while starting process.", e );
+        }
 
         try ( ThreadedReader stdOutReader =
                       this.threadedReaderFactory.create( process.inputReader( StandardCharsets.UTF_8 ));

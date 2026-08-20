@@ -122,7 +122,7 @@ class ProcessRunnerTest
         ProcessRunner processRunner = new ProcessRunner(
                 this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
                 this.testDirectory, this.testCommand );
-        RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
+        ProcessStartException exception = assertThrowsExactly( ProcessStartException.class, processRunner::run );
         assertEquals( "IOException occurred while starting process.", exception.getMessage() );
         assertEquals( ioException, exception.getCause() );
     }
