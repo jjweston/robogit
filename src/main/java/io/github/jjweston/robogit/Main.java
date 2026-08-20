@@ -45,6 +45,8 @@ class Main implements Callable< Integer >
 
     private final FileLastModifiedUtil fileLastModifiedUtil = new FileLastModifiedUtil();
 
+    @CommandLine.Spec private CommandLine.Model.CommandSpec spec;
+
     @CommandLine.Option( names = "--poll-interval", paramLabel = "<duration>", defaultValue = "1m",
             converter = DurationConverter.class,
             description = "how often to check for changes (default: ${DEFAULT-VALUE})" )
@@ -59,8 +61,29 @@ class Main implements Callable< Integer >
             description = "Show list of changed files and exit without committing changes." )
     private boolean dryRun;
 
-    @CommandLine.Parameters( description = "path to the Git repository" )
     private File repository;
+
+    @CommandLine.Parameters( description = "path to the Git repository" )
+    private void setRepository( File repository )
+    {
+        if ( repository == null ) throw new IllegalArgumentException( "Repository must not be null." );
+
+        String prefix = "Invalid value for parameter '<repository>':";
+
+        if ( !repository.exists() )
+        {
+            throw new CommandLine.ParameterException( this.spec.commandLine(),
+                    String.format( "%s Path \"%s\" does not exist.", prefix, repository ));
+        }
+
+        if ( !repository.isDirectory() )
+        {
+            throw new CommandLine.ParameterException( this.spec.commandLine(),
+                    String.format( "%s Path \"%s\" is a file, not a directory.", prefix, repository ));
+        }
+
+        this.repository = repository;
+    }
 
     private Main() {}
 
