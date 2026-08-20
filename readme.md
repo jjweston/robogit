@@ -21,7 +21,7 @@ RoboGit is tested with the following versions, but other versions may also work:
 
 You need the [Git](https://git-scm.com/) command-line tools to run RoboGit.
 
-RoboGit is tested with version `2.52.0`, but other versions may also work.
+RoboGit is tested with version `2.55.0`, but other versions may also work.
 
 ## Building and Running
 
