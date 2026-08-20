@@ -10,21 +10,22 @@ Requirements
 Java Virtual Machine
 Git Command-Line Tools
 
-Running
--------
+Installation
+------------
 
-Windows:
-    bin\robogit <repository>
+Add the "bin" directory to your PATH.
 
-Linux/macOS:
-    bin/robogit <repository>
+Usage
+-----
+
+robogit [options] <repository>
 
 Use the "--help" option for command-line help.
 
 Project Information
 -------------------
 
-For additional information, tested versions, and source code, see:
+For additional information and source code, see:
     https://github.com/jjweston/robogit
 
 License

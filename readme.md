@@ -2,37 +2,16 @@
 
 Periodically check a Git repository for changes to the working tree and commit them.
 
-## Prerequisites
+## Installation
 
-### Java
+RoboGit releases are available on the [releases](https://github.com/jjweston/robogit/releases) page.
 
-You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build RoboGit.
-You need a Java virtual machine to run RoboGit.
-We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
+Install RoboGit by downloading either the `.zip` or `.tar.gz` distribution,
+extracting it, and adding its `bin` directory to your `PATH`.
 
-RoboGit is tested with the following versions, but other versions may also work:
+## Usage
 
-- Eclipse Temurin:
-  - `25.0.4+7-LTS`
-- Apache Maven:
-  - `3.9.16`
-
-### Git
-
-You need the [Git](https://git-scm.com/) command-line tools to run RoboGit.
-
-RoboGit is tested with version `2.55.0`, but other versions may also work.
-
-## Building and Running
-
-To build RoboGit:
-`mvn package`
-
-To run RoboGit on Windows:
-`target\appassembler\bin\robogit [options] <repository>`
-
-To run RoboGit on Linux/macOS:
-`target/appassembler/bin/robogit [options] <repository>`
+`robogit [options] <repository>`
 
 RoboGit supports the following command-line options:
 
@@ -55,6 +34,38 @@ them.
 <duration> Durations are specified as a positive number followed by a unit:
            s = seconds, m = minutes, h = hours (for example: 30s, 5m, 1h)
 ```
+
+## Prerequisites
+
+### Java
+
+You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build RoboGit.
+You need a Java virtual machine to run RoboGit.
+We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
+
+RoboGit is tested with the following versions, but other versions may also work:
+
+- Eclipse Temurin:
+  - `25.0.4+7-LTS`
+- Apache Maven:
+  - `3.9.16`
+
+### Git
+
+You need the [Git](https://git-scm.com/) command-line tools to run RoboGit.
+
+RoboGit is tested with version `2.55.0`, but other versions may also work.
+
+## Build and Run from Source
+
+To build RoboGit:
+`mvn package`
+
+To run RoboGit on Windows:
+`target\appassembler\bin\robogit [options] <repository>`
+
+To run RoboGit on Linux/macOS:
+`target/appassembler/bin/robogit [options] <repository>`
 
 ## Release Process
 
