@@ -84,9 +84,11 @@ class Main implements Callable< Integer >
 
         ProcessRunner isInsideWorkTree = new ProcessRunner( repository, "git", "rev-parse", "--is-inside-work-tree" );
 
-        try
+        try { isInsideWorkTree.run(); }
+        catch ( ProcessStartException e )
         {
-            isInsideWorkTree.run();
+            throw new CommandLine.ParameterException(
+                    this.spec.commandLine(), "Unable to run Git. Ensure Git is installed and available on PATH.", e );
         }
         catch ( ProcessErrorException e )
         {
