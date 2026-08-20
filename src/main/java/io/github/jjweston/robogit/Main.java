@@ -72,14 +72,32 @@ class Main implements Callable< Integer >
 
         if ( !repository.exists() )
         {
-            throw new CommandLine.ParameterException( this.spec.commandLine(),
-                    String.format( "%s Path \"%s\" does not exist.", prefix, repository ));
+            throw new CommandLine.ParameterException( this.spec.commandLine(), String.format(
+                    "%s Path \"%s\" does not exist.", prefix, repository ));
         }
 
         if ( !repository.isDirectory() )
         {
-            throw new CommandLine.ParameterException( this.spec.commandLine(),
-                    String.format( "%s Path \"%s\" is a file, not a directory.", prefix, repository ));
+            throw new CommandLine.ParameterException( this.spec.commandLine(), String.format(
+                    "%s Path \"%s\" is not a directory.", prefix, repository ));
+        }
+
+        ProcessRunner isInsideWorkTree = new ProcessRunner( repository, "git", "rev-parse", "--is-inside-work-tree" );
+
+        try
+        {
+            isInsideWorkTree.run();
+        }
+        catch ( ProcessErrorException e )
+        {
+            throw new CommandLine.ParameterException( this.spec.commandLine(), String.format(
+                    "%s Path \"%s\" is not a Git repository.", prefix, repository ), e );
+        }
+
+        if ( !isInsideWorkTree.getStdOut().trim().equals( "true" ))
+        {
+            throw new CommandLine.ParameterException( this.spec.commandLine(), String.format(
+                    "%s Path \"%s\" is not inside the work tree of a Git repository.", prefix, repository ));
         }
 
         this.repository = repository;

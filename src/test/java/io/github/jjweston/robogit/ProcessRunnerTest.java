@@ -277,7 +277,7 @@ class ProcessRunnerTest
                 this.mockThreadUtil, this.mockProcessBuilderFactory, this.mockThreadedReaderFactory,
                 this.testDirectory, this.testCommand );
 
-        RuntimeException exception = assertThrowsExactly( RuntimeException.class, processRunner::run );
+        ProcessErrorException exception = assertThrowsExactly( ProcessErrorException.class, processRunner::run );
         assertEquals( expectedMessage, exception.getMessage() );
 
         this.verifyProcessRun( processRunner, testExitValue );
