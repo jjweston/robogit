@@ -1,5 +1,5 @@
-RoboGit 1.0.0-RC1
------------------
+RoboGit 1.0.0-SNAPSHOT
+----------------------
 
 Periodically check a Git repository for changes to the working tree and commit
 them.
