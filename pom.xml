@@ -106,7 +106,6 @@ limitations under the License.
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <mainClass>io.github.jjweston.robogit.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
