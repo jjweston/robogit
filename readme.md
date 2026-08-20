@@ -13,7 +13,7 @@ We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other 
 RoboGit is tested with the following versions, but other versions may also work:
 
 - Eclipse Temurin:
-  - `25.0.1+8-LTS`
+  - `25.0.4+7-LTS`
 - Apache Maven:
   - `3.9.12`
 
