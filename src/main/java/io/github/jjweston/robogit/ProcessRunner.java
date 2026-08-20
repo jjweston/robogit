@@ -127,7 +127,7 @@ class ProcessRunner
                 message.append( this.exitValue );
                 this.appendLines( message, "Output", this.stdOut );
                 this.appendLines( message, "Error", this.stdErr );
-                throw new RuntimeException( message.toString() );
+                throw new ProcessErrorException( message.toString() );
             }
         }
     }
